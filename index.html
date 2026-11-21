@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Free QR Code Generator</title>
+<meta name="description" content="Free QR code generator. Paste a link or type text, pick a size and colors, and download your QR code as a PNG instantly. No sign-up.">
+<meta name="theme-color" content="#f3f4f7">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%233a63f3'/%3E%3Cpath fill='white' d='M5 5h6v6H5zM13 5h6v6h-6zM5 13h6v6H5zM13 13h2v2h-2zM17 13h2v2h-2zM15 15h2v2h-2zM13 17h2v2h-2zM17 17h2v2h-2z'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #f3f4f7;
+    --card: #ffffff;
+    --text: #1d2330;
+    --muted: #5b6475;
+    --soft: #8a91a0;
+    --line: #e3e6ec;
+    --line-strong: #d4d8e0;
+    --accent: #3a63f3;
+    --accent-dark: #2c50d6;
+    --accent-soft: rgba(58, 99, 243, 0.12);
+    --error: #c0392b;
+    --error-soft: #fdecea;
+    --warn: #9a5b00;
+    --warn-soft: #fff4e0;
+    --ok: #1e8e4f;
+    --ok-soft: #e7f6ee;
+    --radius: 14px;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+    padding: 20px 14px calc(24px + env(safe-area-inset-bottom));
+  }
+  [hidden] { display: none !important; }
+  button { font: inherit; }
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+  .app { max-width: 920px; margin: 0 auto; }
+
+  header { text-align: center; margin: 4px 0 20px; }
+  h1 { font-size: 1.55rem; margin: 0 0 6px; letter-spacing: -0.01em; }
+  .sub { margin: 0; color: var(--muted); font-size: 0.98rem; }
+
+  .grid {
+    display: grid;
+    gap: 14px;
+    grid-template-columns: 1fr;
+    grid-template-areas: "input" "preview" "options";
+  }
+  @media (min-width: 760px) {
+    body { padding-top: 40px; }
+    h1 { font-size: 1.9rem; }
+    header { margin-bottom: 28px; }
+    .grid {
+      grid-template-columns: 1.1fr 1fr;
+      grid-template-areas: "input preview" "options preview";
+      align-items: start;
+      gap: 18px;
+    }
+    .preview-panel { position: sticky; top: 20px; }
+  }
+
+  .panel {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: 0 4px 24px rgba(20, 30, 60, 0.07);
+    padding: 20px 18px;
+  }
+  .input-panel { grid-area: input; }
+  .preview-panel { grid-area: preview; }
+  .options-panel { grid-area: options; padding: 0; overflow: hidden; }
+
+  /* Input */
+  .label-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 8px; }
+  label.main { font-weight: 600; font-size: 0.98rem; }
+  textarea {
+    width: 100%;
+    min-height: 96px;
+    max-height: 260px;
+    resize: vertical;
+    font: inherit;
+    font-size: 16px; /* prevents zoom on iPhone */
+    line-height: 1.4;
+    padding: 12px 14px;
+    border: 1.5px solid var(--line-strong);
+    border-radius: 10px;
+    outline: none;
+    background: #fff;
+    color: var(--text);
+    transition: border-color .15s, box-shadow .15s;
+  }
+  textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  textarea.invalid { border-color: var(--error); box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.12); }
+
+  .row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; gap: 8px; }
+  .counter { font-size: 0.85rem; color: var(--soft); font-variant-numeric: tabular-nums; }
+  .counter.near { color: var(--warn); font-weight: 600; }
+  .actions { display: flex; gap: 6px; }
+
+  .chip-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    min-height: 36px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1.5px solid var(--line-strong);
+    background: #fff;
+    color: var(--text);
+    font-size: 0.88rem; font-weight: 600;
+    cursor: pointer;
+    transition: background .15s, border-color .15s, color .15s;
+  }
+  .chip-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .chip-btn:disabled { color: #b5bac4; border-color: var(--line); cursor: default; }
+  .chip-btn svg { width: 16px; height: 16px; }
+
+  .tip {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    margin-top: 12px;
+    padding: 10px 12px;
+    background: var(--accent-soft);
+    border-radius: 10px;
+    font-size: 0.88rem;
+    color: #24376f;
+  }
+  .tip button {
+    flex-shrink: 0;
+    border: none; background: var(--accent); color: #fff;
+    border-radius: 8px; padding: 7px 10px; font-size: 0.85rem; font-weight: 600; cursor: pointer;
+  }
+  .tip button:hover { background: var(--accent-dark); }
+
+  /* Preview */
+  .preview {
+    width: 100%;
+    max-width: 320px;
+    aspect-ratio: 1 / 1;
+    margin: 0 auto;
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    background: #fff;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+  }
+  .preview img {
+    width: 100%; height: 100%; display: block;
+    -webkit-touch-callout: default;
+  }
+  .placeholder {
+    width: 100%; height: 100%;
+    background: #f5f6f9;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 10px; color: var(--soft); font-size: 0.92rem; text-align: center; padding: 20px;
+  }
+  .placeholder svg { width: 60px; height: 60px; opacity: 0.45; }
+  .placeholder strong { color: var(--muted); font-size: 0.98rem; }
+  .placeholder.is-error { background: var(--error-soft); color: var(--error); }
+  .placeholder.is-error strong { color: var(--error); }
+  .placeholder.is-error svg { opacity: 0.8; }
+
+  .msg {
+    display: flex; align-items: flex-start; gap: 8px;
+    margin: 14px 0 0;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 0.88rem;
+    text-align: left;
+  }
+  .msg:empty { display: none; }
+  .msg.error { background: var(--error-soft); color: var(--error); }
+  .msg.warn { background: var(--warn-soft); color: var(--warn); }
+  .msg.ok { background: var(--ok-soft); color: var(--ok); }
+
+  .download {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    width: 100%;
+    min-height: 52px;
+    margin-top: 14px;
+    border: none;
+    border-radius: 12px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 1.05rem; font-weight: 600;
+    cursor: pointer;
+    transition: background .15s, transform .05s;
+  }
+  .download svg { width: 20px; height: 20px; }
+  .download:hover:not(:disabled) { background: var(--accent-dark); }
+  .download:active:not(:disabled) { transform: translateY(1px); }
+  .download:disabled { background: #c9ced8; cursor: not-allowed; }
+  .download small { font-weight: 500; opacity: 0.85; font-size: 0.85rem; }
+  .hint { margin: 10px 0 0; text-align: center; font-size: 0.82rem; color: var(--soft); }
+  .linkish {
+    display: block; margin: 10px auto 0; padding: 4px 6px;
+    background: none; border: none; color: var(--accent);
+    font-size: 0.86rem; font-weight: 600; text-decoration: underline; cursor: pointer;
+  }
+
+  /* Options */
+  details > summary {
+    list-style: none;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 16px 18px;
+    cursor: pointer;
+    user-select: none;
+  }
+  details > summary::-webkit-details-marker { display: none; }
+  .sum-left { display: flex; flex-direction: column; }
+  .sum-title { font-weight: 600; }
+  .sum-title .tag {
+    margin-left: 6px; font-size: 0.72rem; font-weight: 600; color: var(--soft);
+    background: #eef0f4; padding: 2px 7px; border-radius: 999px; vertical-align: 2px;
+  }
+  .sum-current { font-size: 0.84rem; color: var(--soft); margin-top: 2px; }
+  .chev { width: 20px; height: 20px; color: var(--soft); transition: transform .2s; flex-shrink: 0; }
+  details[open] .chev { transform: rotate(180deg); }
+  .opts { padding: 4px 18px 20px; border-top: 1px solid var(--line); }
+
+  fieldset { border: none; margin: 16px 0 0; padding: 0; }
+  legend { font-weight: 600; font-size: 0.92rem; margin-bottom: 8px; padding: 0; }
+
+  .segmented {
+    position: relative;
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    background: #eef0f4; border-radius: 10px; padding: 4px; gap: 4px;
+  }
+  .segmented input { position: absolute; opacity: 0; pointer-events: none; width: 1px; height: 1px; }
+  .segmented label {
+    text-align: center; padding: 9px 4px; border-radius: 8px; cursor: pointer;
+    font-size: 0.9rem; font-weight: 600; color: var(--muted);
+    transition: background .15s, color .15s, box-shadow .15s;
+  }
+  .segmented label small { display: block; font-weight: 500; font-size: 0.74rem; color: var(--soft); }
+  .segmented input:checked + label { background: #fff; color: var(--text); box-shadow: 0 1px 4px rgba(20,30,60,0.12); }
+  .segmented input:focus-visible + label { outline: 3px solid var(--accent); outline-offset: 1px; }
+
+  .swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+  .swatch {
+    width: 44px; height: 44px; border-radius: 10px; cursor: pointer;
+    border: 2px solid var(--line); padding: 5px; background: var(--sbg);
+    position: relative;
+  }
+  .swatch span { display: block; width: 100%; height: 100%; border-radius: 5px; background: var(--sfg); }
+  .swatch[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+  .colors { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+  .color-field {
+    display: flex; align-items: center; gap: 10px;
+    border: 1.5px solid var(--line-strong); border-radius: 10px; padding: 8px 10px;
+    cursor: pointer;
+  }
+  .color-field input[type="color"] {
+    -webkit-appearance: none; appearance: none;
+    width: 34px; height: 34px; border: 1px solid var(--line-strong); border-radius: 8px;
+    padding: 0; background: none; cursor: pointer; flex-shrink: 0;
+  }
+  .color-field input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+  .color-field input[type="color"]::-webkit-color-swatch { border: none; border-radius: 7px; }
+  .color-field input[type="color"]::-moz-color-swatch { border: none; border-radius: 7px; }
+  .color-text { display: flex; flex-direction: column; min-width: 0; }
+  .color-text b { font-size: 0.86rem; }
+  .color-text code { font-size: 0.8rem; color: var(--soft); text-transform: uppercase; }
+
+  .opts-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; gap: 10px; }
+  .opts-note { font-size: 0.8rem; color: var(--soft); }
+
+  footer { margin-top: 22px; font-size: 0.85rem; color: var(--soft); text-align: center; }
+
+  /* Save window (fallback when downloads are blocked) */
+  .modal {
+    position: fixed; inset: 0; z-index: 50;
+    background: rgba(20, 26, 40, 0.55);
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px;
+  }
+  .modal-card {
+    background: #fff; border-radius: 16px; width: 100%; max-width: 420px;
+    max-height: calc(100vh - 32px); overflow: auto;
+    padding: 20px 18px; text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  }
+  .modal-card h2 { margin: 0 0 6px; font-size: 1.15rem; }
+  .modal-card p { margin: 0 0 14px; color: var(--muted); font-size: 0.92rem; }
+  .modal-card img {
+    display: block; width: 100%; max-width: 320px; aspect-ratio: 1 / 1;
+    margin: 0 auto; border: 1.5px solid var(--line); border-radius: 10px;
+    -webkit-touch-callout: default; -webkit-user-select: auto; user-select: auto;
+  }
+  .modal-actions { display: flex; gap: 8px; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
+  .modal-actions .download { width: auto; min-height: 44px; margin: 0; padding: 0 22px; font-size: 0.98rem; }
+  .modal-actions .chip-btn { min-height: 44px; }
+
+  @media (max-width: 380px) {
+    .panel { padding: 16px 14px; }
+    h1 { font-size: 1.35rem; }
+    .colors { grid-template-columns: 1fr; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<main class="app">
+  <header>
+    <h1>Free QR Code Generator</h1>
+    <p class="sub">Paste a link or type text. Your QR code appears instantly.</p>
+  </header>
+
+  <div class="grid">
+    <!-- INPUT -->
+    <section class="panel input-panel" aria-labelledby="inputLabel">
+      <div class="label-row">
+        <label id="inputLabel" class="main" for="qrInput">Link or text</label>
+      </div>
+      <textarea id="qrInput" maxlength="1000" rows="3"
+        placeholder="https://example.com or any text"
+        autocomplete="off" autocapitalize="off" spellcheck="false"
+        aria-describedby="counter"></textarea>
+
+      <div class="row">
+        <span id="counter" class="counter" aria-live="off">0 / 1000</span>
+        <div class="actions">
+          <button id="pasteBtn" class="chip-btn" type="button" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
+            Paste
+          </button>
+          <button id="clearBtn" class="chip-btn" type="button" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            Clear
+          </button>
+        </div>
+      </div>
+
+      <div id="linkTip" class="tip" hidden>
+        <span>This looks like a website. Add <b>https://</b> so phones open it as a link.</span>
+        <button id="addHttpsBtn" type="button">Add https://</button>
+      </div>
+    </section>
+
+    <!-- PREVIEW + DOWNLOAD -->
+    <section class="panel preview-panel" aria-label="QR code preview">
+      <div class="preview" id="preview">
+        <img id="qrImg" alt="" hidden>
+        <div id="placeholder" class="placeholder">
+          <svg id="phIconEmpty" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M3 3h8v8H3V3zm2 2v4h4V5H5zm8-2h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm8-2h2v2h-2v-2zm2 2h2v2h-2v-2zm-2 2h2v2h-2v-2zm4 0h2v2h-2v-2zm2-4h2v2h-2v-2zm0 4h2v4h-4v-2h2v-2zm-4 2h2v2h-2v-2z"/>
+          </svg>
+          <svg id="phIconError" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden>
+            <circle cx="12" cy="12" r="10"/><path d="M12 7v6M12 17h.01"/>
+          </svg>
+          <strong id="phTitle">Your QR code will appear here.</strong>
+          <span id="phText">Start typing or paste a link above.</span>
+        </div>
+      </div>
+
+      <p id="msg" class="msg" role="status" aria-live="polite"></p>
+
+      <button id="downloadBtn" class="download" type="button" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+        <span>Download PNG <small id="dlSize">1024 × 1024</small></span>
+      </button>
+      <button id="altSaveBtn" class="linkish" type="button" hidden>Download not working? Show the image to save it</button>
+      <p class="hint">On a phone, you can also press and hold the QR code to save it. For Print size, use the Download button.</p>
+    </section>
+
+    <!-- OPTIONS -->
+    <section class="panel options-panel">
+      <details id="optsDetails">
+        <summary>
+          <span class="sum-left">
+            <span class="sum-title">Size &amp; colors <span class="tag">Optional</span></span>
+            <span class="sum-current" id="sumCurrent">1024 px · Classic black on white</span>
+          </span>
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+        </summary>
+
+        <div class="opts">
+          <fieldset>
+            <legend>Download size</legend>
+            <div class="segmented" role="radiogroup" aria-label="Download size">
+              <input type="radio" name="size" id="size512" value="512">
+              <label for="size512">Small<small>512 px</small></label>
+              <input type="radio" name="size" id="size1024" value="1024" checked>
+              <label for="size1024">Standard<small>1024 px</small></label>
+              <input type="radio" name="size" id="size2048" value="2048">
+              <label for="size2048">Print<small>2048 px</small></label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Colors</legend>
+            <div class="swatches" id="swatches"></div>
+            <div class="colors">
+              <label class="color-field">
+                <input type="color" id="fgColor" value="#000000" aria-label="QR code color">
+                <span class="color-text"><b>Code</b><code id="fgHex">#000000</code></span>
+              </label>
+              <label class="color-field">
+                <input type="color" id="bgColor" value="#ffffff" aria-label="Background color">
+                <span class="color-text"><b>Background</b><code id="bgHex">#FFFFFF</code></span>
+              </label>
+            </div>
+          </fieldset>
+
+          <div class="opts-foot">
+            <span class="opts-note">Dark code on a light background scans best.</span>
+            <button id="resetBtn" class="chip-btn" type="button">Reset</button>
+          </div>
+        </div>
+      </details>
+    </section>
+  </div>
+</main>
+
+<footer>Free to use. Nothing you type is stored.</footer>
+
+<!-- Save window: shown when the browser blocks downloads -->
+<div id="saveModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="saveTitle" hidden>
+  <div class="modal-card">
+    <h2 id="saveTitle">Save your QR code</h2>
+    <p id="saveText">Press and hold the image (phone) or right-click it (computer), then choose Save image.</p>
+    <img id="saveImg" alt="Full-size QR code to save">
+    <div class="modal-actions">
+      <button id="retryBtn" class="chip-btn" type="button">Try download again</button>
+      <button id="closeModalBtn" class="download" type="button">Done</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script>
+(function () {
+  var QUIET = 4;          // white border, in QR modules
+  var MAX = 1000;         // character limit in the text box
+  var MAX_BYTES = 2953;   // most bytes one QR code can hold (version 40, low error correction)
+  var DELAY = 200;        // ms before updating while typing
+  var PREVIEW_MAX = 1024; // preview never renders larger than this (keeps phones fast)
+  var STORE_KEY = 'qrgen.settings.v1';
+  var FALLBACK_LIB = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js';
+  var DEFAULTS = { size: 1024, fg: '#000000', bg: '#ffffff' };
+  var PRESETS = [
+    { name: 'Classic black on white', fg: '#000000', bg: '#ffffff' },
+    { name: 'Navy on white',          fg: '#1b2a4a', bg: '#ffffff' },
+    { name: 'Blue on white',          fg: '#2c50d6', bg: '#ffffff' },
+    { name: 'Forest on white',        fg: '#14532d', bg: '#ffffff' },
+    { name: 'Berry on white',         fg: '#7a1f4b', bg: '#ffffff' },
+    { name: 'Ink on cream',           fg: '#222222', bg: '#fdf6e3' }
+  ];
+
+  var $ = function (id) { return document.getElementById(id); };
+  var input = $('qrInput'), counter = $('counter'), clearBtn = $('clearBtn'), pasteBtn = $('pasteBtn');
+  var linkTip = $('linkTip'), addHttpsBtn = $('addHttpsBtn');
+  var img = $('qrImg'), placeholder = $('placeholder'), phTitle = $('phTitle'), phText = $('phText');
+  var phIconEmpty = $('phIconEmpty'), phIconError = $('phIconError');
+  var msg = $('msg'), downloadBtn = $('downloadBtn'), dlSize = $('dlSize'), altSaveBtn = $('altSaveBtn');
+  var fgColor = $('fgColor'), bgColor = $('bgColor'), fgHex = $('fgHex'), bgHex = $('bgHex');
+  var swatchesEl = $('swatches'), sumCurrent = $('sumCurrent'), resetBtn = $('resetBtn');
+  var saveModal = $('saveModal'), saveImg = $('saveImg'), saveText = $('saveText');
+  var retryBtn = $('retryBtn'), closeModalBtn = $('closeModalBtn');
+
+  var settings = loadSettings();
+  var canvas = document.createElement('canvas'); // preview canvas
+  var timer = null;
+  var hasCode = false;
+  var lastQR = null;
+  var pasteNotice = '';  // shown once after a paste that was cut off
+  var busy = false;      // prevents double downloads
+  var lastFocus = null;
+  var libState = 'loading'; // 'ready' | 'loading' | 'failed'
+
+  /* ---------- Where are we running? (decides the download path) ---------- */
+  var inFrame = (function () { try { return window.self !== window.top; } catch (e) { return true; } })();
+  var inAppBrowser = /FBAN|FBAV|FB_IAB|Instagram|Line\/|MicroMessenger|Snapchat|musical_ly|TikTok|LinkedInApp|Twitter/i.test(navigator.userAgent || '');
+  var supportsDownloadAttr = 'download' in document.createElement('a');
+  var limitedDownload = inFrame || inAppBrowser || !supportsDownloadAttr;
+
+  /* ---------- QR engine: main source, then a backup source ---------- */
+  function initLib() {
+    if (typeof window.qrcode !== 'function') return false;
+    var encoder = window.TextEncoder ? new TextEncoder() : null;
+    // Encode text as UTF-8 so emoji and accented letters scan correctly
+    window.qrcode.stringToBytes = function (s) {
+      if (encoder) return Array.prototype.slice.call(encoder.encode(s));
+      var utf8 = unescape(encodeURIComponent(s));
+      var bytes = [];
+      for (var i = 0; i < utf8.length; i++) bytes.push(utf8.charCodeAt(i));
+      return bytes;
+    };
+    libState = 'ready';
+    return true;
+  }
+  function loadBackupLib() {
+    libState = 'loading';
+    var s = document.createElement('script');
+    s.src = FALLBACK_LIB;
+    s.onload = function () { if (!initLib()) libState = 'failed'; update(); };
+    s.onerror = function () { libState = 'failed'; update(); };
+    document.head.appendChild(s);
+  }
+
+  /* ---------- Settings (only size and colors are saved, never your text) ---------- */
+  function loadSettings() {
+    var s = { size: DEFAULTS.size, fg: DEFAULTS.fg, bg: DEFAULTS.bg };
+    try {
+      var raw = localStorage.getItem(STORE_KEY);
+      if (raw) {
+        var p = JSON.parse(raw);
+        if (p && [512, 1024, 2048].indexOf(p.size) !== -1) s.size = p.size;
+        if (p && /^#[0-9a-f]{6}$/i.test(p.fg)) s.fg = p.fg.toLowerCase();
+        if (p && /^#[0-9a-f]{6}$/i.test(p.bg)) s.bg = p.bg.toLowerCase();
+      }
+    } catch (e) { /* storage unavailable or damaged: use defaults */ }
+    return s;
+  }
+  function saveSettings() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(settings)); } catch (e) { /* ignore */ }
+  }
+
+  /* ---------- Input cleaning and checks ---------- */
+  // Invisible control codes (keeps tab and line break)
+  var CONTROL_CHARS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g;
+  // Zero-width space, word joiner, byte-order mark, and text-direction overrides.
+  // Emoji joiners (U+200D) and letter joiners (U+200C) are kept on purpose.
+  var HIDDEN_CHARS = /[\u200B\u2060\uFEFF\u202A-\u202E\u2066-\u2069]/g;
+
+  function removeBrokenSurrogates(s) {
+    var out = '';
+    for (var i = 0; i < s.length; i++) {
+      var c = s.charCodeAt(i);
+      if (c >= 0xD800 && c <= 0xDBFF) {
+        var d = s.charCodeAt(i + 1);
+        if (d >= 0xDC00 && d <= 0xDFFF) { out += s.charAt(i) + s.charAt(i + 1); i++; }
+        continue; // half of an emoji with no partner: drop it
+      }
+      if (c >= 0xDC00 && c <= 0xDFFF) continue;
+      out += s.charAt(i);
+    }
+    return out;
+  }
+
+  function cleanText(raw) {
+    var s = String(raw || '').replace(/\r\n?/g, '\n');
+    var before = s.length;
+    s = removeBrokenSurrogates(s.replace(CONTROL_CHARS, '').replace(HIDDEN_CHARS, ''));
+    var removed = before - s.length;
+    if (s.normalize) { try { s = s.normalize('NFC'); } catch (e) { /* keep as is */ } }
+    return { text: s.trim(), removed: removed };
+  }
+
+  function utf8Length(s) {
+    if (window.TextEncoder) return new TextEncoder().encode(s).length;
+    return unescape(encodeURIComponent(s)).length;
+  }
+
+  function linkProblem(t) {
+    var squashed = t.replace(/\s+/g, ''); // catches "java script:" tricks
+    if (/^(javascript|vbscript):/i.test(squashed) ||
+        /^data:[a-z]+\/[a-z0-9.+-]+[;,]/i.test(squashed) ||
+        /^file:\/\//i.test(squashed)) {
+      return { block: true, text: "This kind of link (javascript:, data: or file:) can't be opened safely from a QR code. Use a normal https:// link instead." };
+    }
+    if (/^https?:\/\//i.test(t)) {
+      if (/\s/.test(t)) return { block: false, text: "Links can't contain spaces or line breaks. Phones may only open the part before the first space." };
+      try {
+        var u = new URL(t);
+        if (!u.hostname || (u.hostname.indexOf('.') === -1 && u.hostname !== 'localhost')) {
+          return { block: false, text: 'This link looks incomplete. Check it before sharing.' };
+        }
+      } catch (e) {
+        return { block: false, text: 'This link looks incomplete. Check it before sharing.' };
+      }
+    }
+    return null;
+  }
+
+  /* ---------- Color helpers ---------- */
+  function lum(hex) {
+    var v = [1, 3, 5].map(function (i) {
+      var c = parseInt(hex.substr(i, 2), 16) / 255;
+      return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2];
+  }
+  function contrast(a, b) {
+    var la = lum(a), lb = lum(b);
+    return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+  }
+  function colorWarning() {
+    var ratio = contrast(settings.fg, settings.bg);
+    if (ratio < 3) return 'These colors are too close together. The code may not scan. Pick a darker code color or a lighter background.';
+    if (lum(settings.fg) > lum(settings.bg)) return 'Light code on a dark background does not scan in some camera apps. Dark on light is safest.';
+    if (ratio < 4.5) return 'Contrast is a bit low. Test-scan the code with your phone before printing.';
+    return '';
+  }
+  function densityNote(qr) {
+    if (!qr) return '';
+    var n = qr.getModuleCount();
+    if (settings.size < 1024 && n >= 73) return 'This code is very detailed because the text is long. Choose Standard or Print size so it scans easily.';
+    if (n >= 97) return 'Long text makes a very detailed code. Test-scan it before printing, or use a short link instead.';
+    return '';
+  }
+  function currentNote() { return colorWarning() || densityNote(lastQR); }
+
+  /* ---------- UI sync ---------- */
+  function renderSwatches() {
+    swatchesEl.innerHTML = '';
+    PRESETS.forEach(function (p) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'swatch';
+      b.title = p.name;
+      b.setAttribute('aria-label', p.name);
+      b.style.setProperty('--sfg', p.fg);
+      b.style.setProperty('--sbg', p.bg);
+      b.appendChild(document.createElement('span'));
+      b.addEventListener('click', function () {
+        settings.fg = p.fg; settings.bg = p.bg;
+        onSettingsChange(true);
+      });
+      swatchesEl.appendChild(b);
+    });
+  }
+
+  function presetName() {
+    for (var i = 0; i < PRESETS.length; i++) {
+      if (PRESETS[i].fg === settings.fg && PRESETS[i].bg === settings.bg) return PRESETS[i].name;
+    }
+    return 'Custom colors';
+  }
+
+  function syncControls() {
+    var r = document.querySelector('input[name="size"][value="' + settings.size + '"]');
+    if (r) r.checked = true;
+    fgColor.value = settings.fg;
+    bgColor.value = settings.bg;
+    fgHex.textContent = settings.fg.toUpperCase();
+    bgHex.textContent = settings.bg.toUpperCase();
+    dlSize.textContent = settings.size + ' × ' + settings.size;
+    sumCurrent.textContent = settings.size + ' px · ' + presetName();
+    Array.prototype.forEach.call(swatchesEl.children, function (b, i) {
+      var p = PRESETS[i];
+      b.setAttribute('aria-pressed', p.fg === settings.fg && p.bg === settings.bg ? 'true' : 'false');
+    });
+  }
+
+  function onSettingsChange(immediate) {
+    syncControls();
+    saveSettings();
+    if (immediate) { clearTimeout(timer); update(); } else { scheduleUpdate(); }
+  }
+
+  function setMsg(text, type) {
+    msg.textContent = text || '';
+    msg.className = 'msg' + (type && text ? ' ' + type : '');
+  }
+
+  function showPlaceholder(title, text, isError) {
+    img.hidden = true;
+    img.removeAttribute('src');
+    img.alt = '';
+    placeholder.hidden = false;
+    placeholder.classList.toggle('is-error', !!isError);
+    phIconEmpty.hidden = !!isError;
+    phIconError.hidden = !isError;
+    phTitle.textContent = title;
+    phText.textContent = text;
+    downloadBtn.disabled = true;
+    altSaveBtn.hidden = true;
+    hasCode = false;
+    lastQR = null;
+  }
+
+  function showEmpty() {
+    showPlaceholder('Your QR code will appear here.', 'Start typing or paste a link above.', false);
+  }
+
+  /* ---------- QR ---------- */
+  function buildQR(text) {
+    var levels = ['M', 'L']; // medium first, fall back to low for longer text
+    for (var i = 0; i < levels.length; i++) {
+      try {
+        var qr = window.qrcode(0, levels[i]);
+        qr.addData(text);
+        qr.make();
+        return qr;
+      } catch (e) { /* too long at this level */ }
+    }
+    return null;
+  }
+
+  function drawQR(qr, size, cv) {
+    cv.width = size;
+    cv.height = size;
+    var c2 = cv.getContext('2d');
+    var n = qr.getModuleCount();
+    var cell = Math.max(1, Math.floor(size / (n + QUIET * 2)));
+    var offset = Math.floor((size - cell * n) / 2);
+    c2.fillStyle = settings.bg;
+    c2.fillRect(0, 0, size, size);
+    c2.fillStyle = settings.fg;
+    for (var r = 0; r < n; r++) {
+      for (var c = 0; c < n; c++) {
+        if (qr.isDark(r, c)) c2.fillRect(offset + c * cell, offset + r * cell, cell, cell);
+      }
+    }
+  }
+
+  function looksLikeBareLink(t) {
+    return /^(www\.)?[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}(:\d+)?(\/\S*)?$/i.test(t) && !/^[a-z][a-z0-9+.-]*:/i.test(t);
+  }
+
+  function updateCounter() {
+    var len = input.value.length;
+    var near = len >= MAX * 0.9;
+    if (!near && len > MAX_BYTES / 4) { // only measure bytes when it could matter
+      try { near = utf8Length(input.value) >= MAX_BYTES * 0.85; } catch (e) { /* ignore */ }
+    }
+    counter.textContent = len + ' / ' + MAX;
+    counter.className = 'counter' + (near ? ' near' : '');
+    clearBtn.disabled = len === 0;
+  }
+
+  function update() {
+    updateCounter();
+    var cleaned = cleanText(input.value);
+    var text = cleaned.text;
+    linkTip.hidden = !looksLikeBareLink(text);
+    input.classList.remove('invalid');
+
+    if (!text) { showEmpty(); setMsg(''); pasteNotice = ''; return; }
+
+    if (libState === 'loading') {
+      showPlaceholder('Loading the QR engine…', 'This only takes a moment.', false);
+      setMsg('');
+      return;
+    }
+    if (libState !== 'ready') {
+      showPlaceholder("QR engine didn't load", 'Check your internet connection, then refresh the page.', true);
+      setMsg('');
+      return;
+    }
+
+    var problem = linkProblem(text);
+    if (problem && problem.block) {
+      input.classList.add('invalid');
+      showPlaceholder("This link type isn't supported", 'Use a normal https:// link instead.', true);
+      setMsg(problem.text, 'error');
+      pasteNotice = '';
+      return;
+    }
+
+    // Check size before doing the heavy work
+    var bytes = utf8Length(text);
+    var qr = bytes <= MAX_BYTES ? buildQR(text) : null;
+    if (!qr) {
+      input.classList.add('invalid');
+      var perChar = bytes / Math.max(1, text.length);
+      var removeAbout = Math.max(1, Math.ceil(Math.max(0, bytes - MAX_BYTES) / perChar));
+      showPlaceholder('Too long for one QR code', 'Remove about ' + removeAbout + ' characters, or link to a page instead.', true);
+      setMsg('One QR code holds about ' + MAX_BYTES.toLocaleString() + ' bytes. This text needs ' + bytes.toLocaleString() +
+             '. Emoji and non-English letters use 2 to 4 bytes each. Shorten it, or put the full text on a web page and make a QR code of that link.', 'error');
+      pasteNotice = '';
+      return;
+    }
+
+    lastQR = qr;
+    drawQR(qr, Math.min(settings.size, PREVIEW_MAX), canvas);
+    img.src = canvas.toDataURL('image/png');
+    img.alt = 'QR code for: ' + (text.length > 80 ? text.slice(0, 80) + '…' : text);
+    img.hidden = false;
+    placeholder.hidden = true;
+    downloadBtn.disabled = false;
+    altSaveBtn.hidden = false;
+    hasCode = true;
+
+    var notes = [];
+    if (pasteNotice) notes.push(pasteNotice);
+    if (cleaned.removed) notes.push('Removed ' + cleaned.removed + ' hidden character' + (cleaned.removed > 1 ? 's' : '') + ' that could stop the code from scanning.');
+    if (problem) notes.push(problem.text);
+    var note = currentNote();
+    if (note) notes.push(note);
+    pasteNotice = '';
+    setMsg(notes.join(' '), notes.length ? 'warn' : '');
+  }
+
+  function scheduleUpdate() {
+    updateCounter();
+    clearTimeout(timer);
+    timer = setTimeout(update, DELAY);
+  }
+
+  /* ---------- Download ---------- */
+  function triggerDownload(href) {
+    var a = document.createElement('a');
+    a.href = href;
+    a.download = 'qr-code.png';
+    a.rel = 'noopener';
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  function fullSizeCanvas() {
+    if (canvas.width === settings.size) return canvas;
+    var out = document.createElement('canvas');
+    drawQR(lastQR, settings.size, out); // full-size file made only on download
+    return out;
+  }
+
+  function openSaveWindow(reason) {
+    if (!hasCode || !lastQR) return;
+    try {
+      saveImg.src = fullSizeCanvas().toDataURL('image/png');
+    } catch (e) {
+      setMsg("Couldn't prepare the image. Press and hold (or right-click) the QR code above and choose Save image.", 'error');
+      return;
+    }
+    if (reason === 'in-app') {
+      saveText.textContent = "This app's built-in browser may block downloads. Press and hold the image and choose Save image (or Add to Photos). You can also open this page in Safari or Chrome.";
+    } else {
+      saveText.textContent = 'Press and hold the image (phone) or right-click it (computer), then choose Save image. This is the full ' + settings.size + ' × ' + settings.size + ' PNG.';
+    }
+    lastFocus = document.activeElement;
+    saveModal.hidden = false;
+    document.body.style.overflow = 'hidden';
+    closeModalBtn.focus();
+  }
+
+  function closeSaveWindow() {
+    saveModal.hidden = true;
+    saveImg.removeAttribute('src');
+    document.body.style.overflow = '';
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+
+  function download() {
+    if (busy) return;
+    clearTimeout(timer);
+    update(); // include the latest typing and settings
+    if (!hasCode || !lastQR) return;
+    var note = currentNote();
+    var okText = 'Download started: qr-code.png (' + settings.size + ' × ' + settings.size + ').' + (note ? ' Test-scan it before using.' : '');
+
+    var out;
+    try { out = fullSizeCanvas(); } catch (e) { openSaveWindow(); return; }
+
+    // Places where downloads are often blocked: try anyway, then show the save window
+    if (limitedDownload) {
+      try { triggerDownload(out.toDataURL('image/png')); } catch (e) { /* blocked */ }
+      openSaveWindow(inAppBrowser ? 'in-app' : '');
+      setMsg('If the file did not download, save it from the window that opened.', 'ok');
+      return;
+    }
+
+    busy = true;
+    var safety = setTimeout(function () { busy = false; }, 5000);
+    var finish = function () { busy = false; clearTimeout(safety); };
+
+    try {
+      if (out.toBlob && window.URL && URL.createObjectURL) {
+        out.toBlob(function (blob) {
+          try {
+            if (blob) {
+              var url = URL.createObjectURL(blob);
+              triggerDownload(url);
+              setTimeout(function () { URL.revokeObjectURL(url); }, 30000); // extra time for slow phones
+            } else {
+              triggerDownload(out.toDataURL('image/png'));
+            }
+            setMsg(okText, note ? 'warn' : 'ok');
+          } catch (e) {
+            openSaveWindow();
+          }
+          finish();
+        }, 'image/png');
+      } else {
+        triggerDownload(out.toDataURL('image/png'));
+        setMsg(okText, note ? 'warn' : 'ok');
+        finish();
+      }
+    } catch (e) {
+      finish();
+      openSaveWindow();
+    }
+  }
+
+  /* ---------- Events ---------- */
+  input.addEventListener('input', scheduleUpdate);
+
+  // Normal paste (Ctrl/Cmd+V or long-press): warn if the 1000-character limit cut it off
+  input.addEventListener('paste', function (e) {
+    var cd = e.clipboardData || window.clipboardData;
+    if (!cd) return;
+    var pasted = cd.getData('text') || '';
+    var selected = Math.max(0, (input.selectionEnd || 0) - (input.selectionStart || 0));
+    var room = MAX - (input.value.length - selected);
+    if (pasted.length > room) pasteNotice = 'Only the first ' + MAX + ' characters fit. The rest was cut off.';
+  });
+
+  clearBtn.addEventListener('click', function () {
+    input.value = '';
+    clearTimeout(timer);
+    update();
+    input.focus();
+  });
+
+  addHttpsBtn.addEventListener('click', function () {
+    input.value = ('https://' + input.value.trim()).slice(0, MAX);
+    clearTimeout(timer);
+    update();
+    input.focus();
+  });
+
+  if (navigator.clipboard && typeof navigator.clipboard.readText === 'function') {
+    pasteBtn.hidden = false;
+    pasteBtn.addEventListener('click', function () {
+      navigator.clipboard.readText().then(function (t) {
+        if (!t) { setMsg('Your clipboard is empty. Copy a link or text first.', 'warn'); return; }
+        if (t.length > MAX) pasteNotice = 'Only the first ' + MAX + ' characters were pasted.';
+        input.value = t.slice(0, MAX);
+        clearTimeout(timer);
+        update();
+      }).catch(function () {
+        setMsg("Couldn't read your clipboard. Tap the box and choose Paste instead.", 'warn');
+        input.focus();
+      });
+    });
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll('input[name="size"]'), function (r) {
+    r.addEventListener('change', function () {
+      settings.size = parseInt(r.value, 10);
+      onSettingsChange(true);
+    });
+  });
+
+  fgColor.addEventListener('input', function () { settings.fg = fgColor.value.toLowerCase(); onSettingsChange(false); });
+  bgColor.addEventListener('input', function () { settings.bg = bgColor.value.toLowerCase(); onSettingsChange(false); });
+
+  resetBtn.addEventListener('click', function () {
+    settings = { size: DEFAULTS.size, fg: DEFAULTS.fg, bg: DEFAULTS.bg };
+    onSettingsChange(true);
+  });
+
+  downloadBtn.addEventListener('click', download);
+  altSaveBtn.addEventListener('click', function () { openSaveWindow(inAppBrowser ? 'in-app' : ''); });
+
+  closeModalBtn.addEventListener('click', closeSaveWindow);
+  retryBtn.addEventListener('click', function () {
+    try { triggerDownload(saveImg.src); } catch (e) { /* still blocked */ }
+  });
+  saveModal.addEventListener('click', function (e) { if (e.target === saveModal) closeSaveWindow(); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !saveModal.hidden) closeSaveWindow();
+  });
+
+  // Ctrl/Cmd + Enter downloads straight from the text box (works right after typing)
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && input.value.trim()) { e.preventDefault(); download(); }
+  });
+
+  // Open the options panel by default on larger screens
+  if (window.matchMedia && window.matchMedia('(min-width: 760px)').matches) $('optsDetails').open = true;
+
+  renderSwatches();
+  syncControls();
+  if (!initLib()) loadBackupLib();
+  update(); // handles text the browser restores after a refresh
+})();
+</script>
+</body>
+</html>
