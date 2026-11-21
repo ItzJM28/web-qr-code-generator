@@ -1,0 +1,18 @@
+# System files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Host tool folders
+.vercel/
+.wrangler/
+.netlify/
+
+# Dependencies (not used, kept out just in case)
+node_modules/
+
+# Secrets: never commit these
+.env
+.env.*
+*.pem
+*.key
