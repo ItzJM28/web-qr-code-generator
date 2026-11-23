@@ -8,8 +8,9 @@ desktop.ini
 .wrangler/
 .netlify/
 
-# Dependencies (not used, kept out just in case)
+# Dependencies and build output
 node_modules/
+dist/
 
 # Secrets: never commit these
 .env
