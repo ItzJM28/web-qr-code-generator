@@ -12,7 +12,7 @@ function TabsList({ className, ...props }: React.ComponentProps<typeof TabsPrimi
     <TabsPrimitive.List
       data-slot="tabs-list"
       className={cn(
-        "flex w-full gap-1 overflow-x-auto overscroll-x-contain rounded-xl bg-secondary p-1",
+        "grid w-full grid-cols-2 gap-2 min-[480px]:grid-cols-3 min-[1100px]:grid-cols-5",
         className
       )}
       {...props}
@@ -25,7 +25,7 @@ function TabsTrigger({ className, ...props }: React.ComponentProps<typeof TabsPr
     <TabsPrimitive.Trigger
       data-slot="tabs-trigger"
       className={cn(
-        "inline-flex min-h-11 flex-[1_0_auto] items-center justify-center gap-2 whitespace-nowrap rounded-[9px] px-3 text-[0.95rem] font-semibold text-muted-foreground select-none touch-manipulation outline-none transition-[background-color,color,transform] duration-150 ease-out-soft active:scale-[0.97] motion-reduce:active:scale-100 focus-visible:ring-[3px] focus-visible:ring-ring/40 data-[state=inactive]:hover:bg-white/60 data-[state=inactive]:hover:text-foreground data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-[0_1px_3px_rgba(20,40,33,0.14)] [&_svg]:size-[18px] [&_svg]:shrink-0",
+        "group/tab flex min-h-14 min-w-0 items-center gap-2.5 rounded-2xl border-[1.5px] border-transparent bg-white px-2.5 sm:px-3.5 py-2.5 text-left text-[0.95rem] font-bold text-ink select-none touch-manipulation outline-none transition-[background-color,color,transform,border-color] duration-150 ease-out-soft active:scale-[0.97] motion-reduce:active:scale-100 focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-white data-[state=inactive]:hover:border-ink data-[state=active]:bg-ink data-[state=active]:text-white [&_svg]:size-5 [&_svg]:shrink-0",
         className
       )}
       {...props}

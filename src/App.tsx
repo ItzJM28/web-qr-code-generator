@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useState, type ChangeEvent } from "react"
+import { useEffect, useMemo, useState, type ChangeEvent, type CSSProperties } from "react"
 import * as RadioGroupPrimitive from "@radix-ui/react-radio-group"
 import { toast } from "sonner"
 import {
-  ChevronDown,
   CircleAlert,
   ClipboardPaste,
   Download,
@@ -12,15 +11,14 @@ import {
   Phone,
   QrCode,
   RotateCcw,
+  ShieldCheck,
   Wifi,
   X,
   type LucideIcon,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
@@ -406,84 +404,187 @@ export default function App() {
     )
   }
 
+  const sizeLabel = SIZES.find((s) => s.v === style.size)?.n ?? "Custom"
+  const order = (i: number) => ({ "--i": i }) as CSSProperties
+
   return (
     <>
-      <main className="mx-auto max-w-[960px] px-[max(1rem,env(safe-area-inset-left))] pt-6 md:pt-10">
-        <header className="mb-6">
-          <h1 className="mb-2 text-[1.6rem] font-bold leading-tight tracking-[-0.015em] md:text-[2rem]">
-            Free QR Code Generator
-          </h1>
-          <p className="max-w-[60ch] text-muted-foreground">
-            Pick what the code should do, fill in the details and download it. No sign-up, and nothing you type
-            leaves your device.
-          </p>
+      <main className="mx-auto w-full max-w-[1280px] px-4 pt-8 pb-[calc(1.5rem+env(safe-area-inset-bottom))] md:px-6 md:pt-12">
+        <header className="mb-6 flex items-end justify-between gap-4 md:mb-8">
+          <div className="min-w-0">
+            <h1 className="font-display text-[clamp(2.1rem,8vw,4.75rem)] uppercase text-ink">
+              QR code <br className="hidden min-[420px]:inline" />
+              generator
+            </h1>
+            <p className="mt-3 max-w-[52ch] text-[0.98rem] font-medium text-ink md:text-lg">
+              Pick what the code should do, fill in the details and download it. Free, no sign-up.
+            </p>
+          </div>
+          <svg aria-hidden="true" viewBox="0 0 100 100" className="hidden size-24 shrink-0 text-white md:block lg:size-32">
+            <g stroke="currentColor" strokeWidth="9">
+              <line x1="50" y1="6" x2="50" y2="94" />
+              <line x1="12" y1="28" x2="88" y2="72" />
+              <line x1="12" y1="72" x2="88" y2="28" />
+            </g>
+          </svg>
         </header>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] md:items-start md:gap-10">
-          <section aria-label="QR code details" className="min-w-0">
-            <Tabs
-              value={type}
-              onValueChange={(v) => {
-                setType(v as QrType)
-                setShowPw(false)
-              }}
-            >
+        <div className="rounded-[28px] bg-shell p-3 md:rounded-[36px] md:p-4">
+          <Tabs
+            value={type}
+            onValueChange={(v) => {
+              setType(v as QrType)
+              setShowPw(false)
+            }}
+            className="bento"
+          >
+            <section aria-labelledby="h-type" className="tile tile-sky tile-blob area-types" style={order(0)}>
+              <h2 id="h-type" className="font-display mb-4 text-2xl md:text-[1.75rem]">
+                What should it do?
+              </h2>
               <TabsList aria-label="QR code type">
                 {TYPES.map((t) => (
                   <TabsTrigger key={t.id} value={t.id}>
-                    <t.icon aria-hidden="true" />
-                    {t.name}
+                    <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-orange-tint text-orange-ink transition-colors duration-150 group-data-[state=active]/tab:bg-orange group-data-[state=active]/tab:text-ink">
+                      <t.icon aria-hidden="true" />
+                    </span>
+                    <span className="min-w-0 leading-tight">{t.name}</span>
                   </TabsTrigger>
                 ))}
               </TabsList>
-              {TYPES.map((t) => (
-                <TabsContent key={t.id} value={t.id}>
-                  <form noValidate autoComplete="off" onSubmit={(e) => e.preventDefault()} className="mt-6 grid gap-4">
-                    {t.fields.map(renderField)}
-                  </form>
-                </TabsContent>
-              ))}
-            </Tabs>
+            </section>
 
-            <Collapsible className="mt-6 border-t pt-4">
-              <CollapsibleTrigger className="group flex min-h-11 w-full items-center justify-between gap-3 rounded-md text-left font-semibold outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40">
-                <span>
-                  Size &amp; colors
-                  <span className="block text-sm font-normal text-muted-foreground">
-                    {style.size} px · {preset ? preset.n : "Custom colors"}
+            <section aria-labelledby="h-details" className="tile tile-orange tile-blob area-form flex flex-col" style={order(1)}>
+              <h2 id="h-details" className="font-display mb-4 text-[1.75rem] text-white md:text-[2rem]">
+                Details
+              </h2>
+              <div className="inner-card">
+                {TYPES.map((t) => (
+                  <TabsContent key={t.id} value={t.id}>
+                    <form noValidate autoComplete="off" onSubmit={(e) => e.preventDefault()} className="grid gap-4">
+                      {t.fields.map(renderField)}
+                    </form>
+                  </TabsContent>
+                ))}
+              </div>
+              <ol aria-label="How it works" className="mt-auto hidden gap-2 pt-6 md:grid">
+                {["Pick a type", "Fill in the details", "Download PNG or SVG"].map((step, i) => (
+                  <li
+                    key={step}
+                    className="flex min-h-11 items-center gap-3 rounded-full border-[1.5px] border-white/70 bg-orange-tint py-1.5 pr-4 pl-1.5 text-sm font-bold text-orange-ink"
+                  >
+                    <span className="grid size-8 shrink-0 place-items-center rounded-full bg-ink text-xs text-white tabular-nums">
+                      {i + 1}
+                    </span>
+                    {step}
+                  </li>
+                ))}
+              </ol>
+            </section>
+
+            <section aria-labelledby="h-preview" className="tile tile-sky tile-blob area-preview flex flex-col" style={order(2)}>
+              <div className="mb-4 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-2">
+                <h2 id="h-preview" className="font-display text-[1.75rem] md:text-[2rem]">
+                  Your QR code
+                </h2>
+                <span className="rounded-full bg-white px-3 py-1 text-sm font-bold text-ink">{def.name}</span>
+              </div>
+              <div className="inner-card grid flex-1 place-items-center content-center">
+                <div
+                  className={cn(
+                    "grid aspect-square w-full max-w-[340px] place-items-center overflow-hidden rounded-[14px]",
+                    qr ? "bg-white" : "border-2 border-dashed border-input bg-secondary"
+                  )}
+                >
+                  {qr ? (
+                    <img
+                      src={dataUrl}
+                      alt={`QR code for your ${def.name.toLowerCase()}`}
+                      className="block size-full [image-rendering:pixelated]"
+                    />
+                  ) : (
+                    <EmptyState view={view} def={def} />
+                  )}
+                </div>
+                <p
+                  role="status"
+                  aria-live="polite"
+                  className={cn(
+                    "w-full max-w-[340px] rounded-[10px] text-sm",
+                    warning && "mt-3 bg-warn-tint px-3 py-2.5 font-medium text-warn"
+                  )}
+                >
+                  {warning}
+                </p>
+              </div>
+            </section>
+
+            <section aria-labelledby="h-download" className="tile tile-orange tile-blob area-download" style={order(3)}>
+              <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+                <div className="min-w-0">
+                  <h2 id="h-download" className="font-display text-[1.75rem] text-white md:text-[2rem]">
+                    Download
+                  </h2>
+                  <p className="mt-2 text-sm font-semibold">
+                    {qr ? `${plural(qr.m.length, "module")} wide` : "Fill in the details to unlock"}
+                  </p>
+                </div>
+                <p className="text-right">
+                  <span className="font-display block text-[clamp(2.5rem,6vw,3.5rem)] tabular-nums text-white">
+                    {nf.format(style.size)}
                   </span>
-                </span>
-                <ChevronDown
-                  aria-hidden="true"
-                  className="size-5 shrink-0 text-muted-foreground transition-transform duration-200 ease-out-soft group-data-[state=open]:rotate-180 motion-reduce:transition-none"
-                />
-              </CollapsibleTrigger>
-              <CollapsibleContent className="grid gap-5 pt-3">
-                <div className="grid gap-2">
-                  <span id="lbl-size" className="text-[0.95rem] font-semibold">
+                  <span className="text-sm font-semibold">px PNG · {sizeLabel}</span>
+                </p>
+              </div>
+              <div className="mt-5 grid grid-cols-1 gap-2 min-[420px]:grid-cols-2">
+                <Button type="button" size="lg" disabled={!qr || busy} onClick={downloadPng}>
+                  <Download aria-hidden="true" />
+                  {busy ? "Saving…" : "Download PNG"}
+                </Button>
+                <Button type="button" size="lg" variant="outline" disabled={!qr} onClick={downloadSvg}>
+                  <Download aria-hidden="true" />
+                  Download SVG
+                </Button>
+              </div>
+              <p className="mt-3 text-sm font-medium">
+                SVG stays sharp at any size, which is best for print. On a phone you can also press and hold the code
+                to save it.
+              </p>
+            </section>
+
+            <section aria-labelledby="h-options" className="tile tile-sky tile-blob area-options" style={order(4)}>
+              <h2 id="h-options" className="font-display mb-1 text-[1.75rem] md:text-[2rem]">
+                Size &amp; colors
+              </h2>
+              <p className="mb-4 text-sm font-semibold">
+                {nf.format(style.size)} px · {preset ? preset.n : "Custom colors"}
+              </p>
+              <div className="grid gap-3">
+                <div className="inner-card grid gap-2">
+                  <span id="lbl-size" className="text-[0.95rem] font-bold">
                     PNG size
                   </span>
                   <RadioGroupPrimitive.Root
                     aria-labelledby="lbl-size"
                     value={String(style.size)}
                     onValueChange={(v) => updateStyle({ size: Number(v) })}
-                    className="grid grid-cols-3 gap-1 rounded-[10px] bg-secondary p-1"
+                    className="grid grid-cols-3 gap-1 rounded-[12px] bg-secondary p-1 min-[1100px]:grid-cols-1"
                   >
                     {SIZES.map((s) => (
                       <RadioGroupPrimitive.Item
                         key={s.v}
                         value={String(s.v)}
-                        className="min-h-11 rounded-[7px] px-1 py-2 text-center text-sm font-semibold text-muted-foreground outline-none transition-[background-color,color] duration-150 ease-out-soft focus-visible:ring-[3px] focus-visible:ring-ring/40 data-[state=checked]:bg-card data-[state=checked]:text-primary data-[state=checked]:shadow-[0_1px_3px_rgba(20,40,33,0.14)]"
+                        className="flex min-h-11 min-w-0 flex-col items-center justify-center rounded-[9px] px-1 py-2 text-center text-sm font-bold min-[1100px]:flex-row min-[1100px]:justify-between min-[1100px]:px-3 min-[1100px]:py-1 text-muted-foreground outline-none transition-[background-color,color] duration-150 ease-out-soft focus-visible:ring-[3px] focus-visible:ring-ring data-[state=checked]:bg-ink data-[state=checked]:text-white"
                       >
                         {s.n}
-                        <span className="block text-xs font-normal tabular-nums">{nf.format(s.v)} px</span>
+                        <span className="block text-xs font-medium tabular-nums">{nf.format(s.v)} px</span>
                       </RadioGroupPrimitive.Item>
                     ))}
                   </RadioGroupPrimitive.Root>
                 </div>
 
-                <div className="grid gap-2">
-                  <span className="text-[0.95rem] font-semibold">Colors</span>
+                <div className="inner-card grid gap-2">
+                  <span className="text-[0.95rem] font-bold">Colors</span>
                   <div className="flex flex-wrap gap-2">
                     {PRESETS.map((p) => {
                       const on = preset?.n === p.n
@@ -497,16 +598,16 @@ export default function App() {
                           onClick={() => updateStyle({ fg: p.f, bg: p.b })}
                           style={{ background: p.b }}
                           className={cn(
-                            "size-11 rounded-[10px] border-2 p-[5px] outline-none transition-[border-color,transform] duration-150 ease-out-soft active:scale-[0.97] motion-reduce:active:scale-100 focus-visible:ring-[3px] focus-visible:ring-ring/40",
-                            on ? "border-primary" : "border-border"
+                            "size-11 rounded-[12px] border-2 p-[5px] outline-none transition-[border-color,transform] duration-150 ease-out-soft active:scale-[0.97] motion-reduce:active:scale-100 focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:ring-offset-2",
+                            on ? "border-orange" : "border-border"
                           )}
                         >
-                          <span className="block size-full rounded-[4px]" style={{ background: p.f }} />
+                          <span className="block size-full rounded-[5px]" style={{ background: p.f }} />
                         </button>
                       )
                     })}
                   </div>
-                  <div className="mt-1 grid grid-cols-1 gap-3 min-[401px]:grid-cols-2">
+                  <div className="mt-1 grid grid-cols-1 gap-2 min-[401px]:grid-cols-2 md:grid-cols-1 min-[1240px]:grid-cols-2">
                     {(
                       [
                         ["fg", "Code"],
@@ -515,14 +616,14 @@ export default function App() {
                     ).map(([k, name]) => (
                       <label
                         key={k}
-                        className="flex min-h-13 min-w-0 cursor-pointer items-center gap-3 rounded-[10px] border-[1.5px] border-input bg-card px-2.5 py-2 focus-within:border-ring"
+                        className="flex min-h-13 min-w-0 cursor-pointer items-center gap-3 rounded-[12px] border-[1.5px] border-input bg-card px-2.5 py-2 focus-within:border-ink focus-within:ring-[3px] focus-within:ring-ink/25"
                       >
                         <input
                           type="color"
                           value={style[k]}
                           aria-label={`${name} color`}
                           onChange={(e) => updateStyle({ [k]: e.target.value } as Partial<Style>)}
-                          className="size-[34px] shrink-0 cursor-pointer rounded-lg border border-input bg-transparent p-0"
+                          className="size-[34px] shrink-0 cursor-pointer rounded-lg border border-input bg-transparent p-0 outline-none"
                         />
                         <span className="min-w-0">
                           <b className="block text-sm">{name}</b>
@@ -536,8 +637,9 @@ export default function App() {
                 <div>
                   <Button
                     type="button"
-                    variant="chip"
+                    variant="outline"
                     size="sm"
+                    className="rounded-full"
                     onClick={() => {
                       setStyle({ ...DEFAULT_STYLE })
                       toast("Size and colors reset")
@@ -547,67 +649,34 @@ export default function App() {
                     Reset size &amp; colors
                   </Button>
                 </div>
-              </CollapsibleContent>
-            </Collapsible>
-          </section>
+              </div>
+            </section>
 
-          <section aria-label="Your QR code" className="min-w-0 md:sticky md:top-6">
-            <Card>
-              <CardContent>
-                <div
-                  className={cn(
-                    "mx-auto grid aspect-square w-full max-w-[340px] place-items-center overflow-hidden rounded-[10px]",
-                    qr ? "border bg-white" : "border border-dashed border-input bg-[#f0f3f1]"
-                  )}
-                >
-                  {qr ? (
-                    <img
-                      src={dataUrl}
-                      alt={`QR code for your ${def.name.toLowerCase()}`}
-                      className="block size-full [image-rendering:pixelated]"
-                    />
-                  ) : (
-                    <EmptyState view={view} def={def} />
-                  )}
-                </div>
-
-                <p
-                  role="status"
-                  aria-live="polite"
-                  className={cn("rounded-[10px] text-sm", warning && "mt-3 bg-warn-tint px-3 py-2.5 text-warn")}
-                >
-                  {warning}
-                </p>
-
-                {qr && (
-                  <p className="mt-3 text-center text-sm tabular-nums text-muted-foreground">
-                    {plural(qr.m.length, "module")} wide · PNG {nf.format(style.size)} × {nf.format(style.size)} px
-                  </p>
-                )}
-
-                <div className="mt-4 grid grid-cols-2 gap-2">
-                  <Button type="button" size="lg" disabled={!qr || busy} onClick={downloadPng}>
-                    <Download aria-hidden="true" />
-                    {busy ? "Saving…" : "Download PNG"}
-                  </Button>
-                  <Button type="button" size="lg" variant="outline" disabled={!qr} onClick={downloadSvg}>
-                    <Download aria-hidden="true" />
-                    Download SVG
-                  </Button>
-                </div>
-                <p className="mt-3 text-center text-[0.82rem] text-muted-foreground">
-                  SVG stays sharp at any size, which is best for print. On a phone you can also press and hold the code
-                  to save it.
-                </p>
-              </CardContent>
-            </Card>
-          </section>
+            <section
+              aria-labelledby="h-privacy"
+              className="tile tile-orange tile-blob area-privacy flex flex-col justify-between gap-4"
+              style={order(5)}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <h2 id="h-privacy" className="text-sm font-bold uppercase tracking-[0.08em]">
+                  Private by design
+                </h2>
+                <span className="grid size-10 place-items-center rounded-xl bg-white text-orange-ink">
+                  <ShieldCheck aria-hidden="true" className="size-5" />
+                </span>
+              </div>
+              <p>
+                <span className="font-display block text-[3.5rem] text-white">0</span>
+                <span className="mt-1 block text-[0.95rem] font-semibold">
+                  bytes sent anywhere. Nothing you type is stored: the code is made right in your browser.
+                </span>
+              </p>
+            </section>
+          </Tabs>
         </div>
-      </main>
 
-      <footer className="mt-10 px-4 pb-[calc(2.5rem+env(safe-area-inset-bottom))] text-center text-sm text-muted-foreground">
-        Free to use. Nothing you type is stored.
-      </footer>
+        <footer className="mt-6 text-center text-sm font-medium text-ink">Free to use. Nothing you type is stored.</footer>
+      </main>
       <Toaster />
     </>
   )
@@ -623,9 +692,21 @@ function EmptyState({ view, def }: { view: View; def: TypeDef }) {
         : def.empty
   const Icon = isErr ? CircleAlert : QrCode
   return (
-    <div className={cn("grid justify-items-center gap-2 p-6 text-center text-[0.92rem]", isErr ? "text-destructive" : "text-muted-foreground")}>
-      <Icon aria-hidden="true" className={cn("size-12", !isErr && "text-[#93a19b]")} strokeWidth={1.75} />
-      <strong className={cn("text-base", isErr ? "text-destructive" : "text-foreground")}>{title}</strong>
+    <div
+      className={cn(
+        "grid justify-items-center gap-2 p-6 text-center text-[0.92rem]",
+        isErr ? "text-destructive" : "text-muted-foreground"
+      )}
+    >
+      <span
+        className={cn(
+          "grid size-16 place-items-center rounded-2xl",
+          isErr ? "bg-[#fde8e6]" : "bg-orange-tint text-orange-ink"
+        )}
+      >
+        <Icon aria-hidden="true" className="size-9" strokeWidth={1.75} />
+      </span>
+      <strong className={cn("mt-1 text-base", isErr ? "text-destructive" : "text-ink")}>{title}</strong>
       <span>{text}</span>
     </div>
   )
