@@ -5,22 +5,22 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap font-semibold select-none touch-manipulation outline-none transition-[background-color,border-color,color,transform] duration-150 ease-out-soft active:scale-[0.97] motion-reduce:active:scale-100 focus-visible:ring-[3px] focus-visible:ring-ring/40 disabled:cursor-not-allowed disabled:active:scale-100 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-[18px]",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap font-semibold select-none touch-manipulation outline-none transition-[background-color,border-color,color,transform] duration-150 ease-out-soft active:scale-[0.97] motion-reduce:active:scale-100 focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:active:scale-100 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-[18px]",
   {
     variants: {
       variant: {
         default:
-          "border-[1.5px] border-primary bg-primary text-primary-foreground hover:border-[#0b5a4b] hover:bg-[#0b5a4b] disabled:border-[#d5dbd8] disabled:bg-[#d5dbd8] disabled:text-[#5f6b66]",
+          "border-[1.5px] border-ink bg-ink text-white hover:border-[#2c2c33] hover:bg-[#2c2c33] disabled:border-[#d9d9de] disabled:bg-[#d9d9de] disabled:text-[#55555c]",
         outline:
-          "border-[1.5px] border-primary bg-card text-primary hover:bg-[#0b5a4b] hover:text-white disabled:border-[#d5dbd8] disabled:bg-[#d5dbd8] disabled:text-[#5f6b66]",
+          "border-[1.5px] border-ink bg-white text-ink hover:bg-ink hover:text-white disabled:border-[#d9d9de] disabled:bg-[#ececf0] disabled:text-[#55555c]",
         chip:
-          "rounded-full border-[1.5px] border-input bg-card text-foreground hover:border-primary hover:text-primary disabled:border-border disabled:text-[#7d8984]",
-        ghost: "text-primary hover:bg-accent",
+          "rounded-full border-[1.5px] border-orange bg-orange-tint text-orange-ink hover:bg-orange hover:text-ink disabled:border-border disabled:bg-white disabled:text-[#6b6b73]",
+        ghost: "text-ink hover:bg-secondary",
       },
       size: {
         default: "min-h-11 rounded-md px-4 text-[0.95rem]",
         sm: "min-h-11 px-3.5 text-sm",
-        lg: "min-h-13 rounded-xl px-4 text-base",
+        lg: "min-h-13 rounded-2xl px-4 text-base",
       },
     },
     defaultVariants: { variant: "default", size: "default" },
